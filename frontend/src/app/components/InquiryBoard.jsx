@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-
-const API = "https://linoj-backend.onrender.com/api";
+import { API_URL } from "../config/api";
 
 export function InquiryBoard() {
   const [inquiries, setInquiries] = useState([]);
@@ -15,7 +14,7 @@ export function InquiryBoard() {
       return;
     }
 
-    fetch(`${API}/inquiries`, {
+    fetch(`${API_URL}/inquiries`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (res) => {

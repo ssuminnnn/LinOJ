@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { API_URL } from "../config/api";
 
 export function Login({ onLogin, onSwitchToSignup }) {
   const [username, setUsername] = useState("");
@@ -17,7 +18,7 @@ export function Login({ onLogin, onSwitchToSignup }) {
 
     setLoading(true);
     try {
-      const res = await fetch("https://linoj-backend.onrender.com/api/auth/login", {
+      const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),

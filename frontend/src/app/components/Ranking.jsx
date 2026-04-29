@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { API_URL } from "../config/api";
 
 export function Ranking() {
   const [rankings, setRankings] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("https://linoj-backend.onrender.com/api/problems/ranking")
+    fetch(`${API_URL}/problems/ranking`)
       .then((res) => res.json())
       .then((data) => setRankings(data))
       .catch(() => {})

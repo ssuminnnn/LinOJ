@@ -3,6 +3,7 @@ import { PROBLEM_MAP, formatId } from "../data/problems";
 import { ProblemPanel } from "./ProblemPanel";
 import { TerminalPanel } from "./TerminalPanel";
 import { ResultPanel } from "./ResultPanel";
+import { API_URL } from "../config/api";
 
 export function ProblemSolve({ problemId, onBack, onSolve }) {
   const [history, setHistory] = useState([]);
@@ -15,7 +16,7 @@ export function ProblemSolve({ problemId, onBack, onSolve }) {
     setHistory((prev) => [...prev, `$ ${command}`]);
 
     try {
-      const res = await fetch("https://linoj-backend.onrender.com/api/execute", {
+      const res = await fetch(`${API_URL}/execute`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ command: command.trim(), problemId }),
