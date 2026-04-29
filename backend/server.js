@@ -12,6 +12,7 @@ app.use(express.json());
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/problems", require("./routes/problemRoutes"));
 app.use("/api/execute", require("./routes/executeRoutes"));
+app.use("/api/inquiries", require("./routes/inquiryRoutes"));
 
 // 기본 테스트 라우트 (선택)
 app.get("/", (req, res) => {

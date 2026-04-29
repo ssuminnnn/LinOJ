@@ -1,4 +1,4 @@
-export function Header({ currentUser, onLogin, onLogout, onNavigate, currentPage }) {
+export function Header({ currentUser, currentRole, onLogin, onLogout, onNavigate, currentPage }) {
   return (
     <header className="bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -55,6 +55,19 @@ export function Header({ currentUser, onLogin, onLogout, onNavigate, currentPage
             >
               랭킹
             </button>
+
+            {(currentRole === "admin" || currentRole === "super_admin") && (
+              <button
+                onClick={() => onNavigate("inquiries")}
+                className={`transition-colors ${
+                  currentPage === "inquiries"
+                    ? "text-blue-600 font-semibold"
+                    : "text-gray-600 hover:text-blue-600"
+                }`}
+              >
+                문의
+              </button>
+            )}
           </nav>
         </div>
 
