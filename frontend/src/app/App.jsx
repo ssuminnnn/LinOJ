@@ -5,6 +5,7 @@ import { Login } from "./components/Login";
 import { ProblemList } from "./components/ProblemList";
 import { MyProblems } from "./components/MyProblems";
 import { Ranking } from "./components/Ranking";
+import { Learn } from "./components/Learn";
 import { ProblemSolve } from "./components/ProblemSolve";
 
 const API = "http://localhost:3001/api";
@@ -76,7 +77,7 @@ export default function App() {
   };
 
   const handleNavigate = (page) => {
-    if (["problems", "myproblems", "ranking"].includes(page)) {
+    if (["problems", "learn", "myproblems", "ranking"].includes(page)) {
       setCurrentPage(page);
     }
   };
@@ -106,6 +107,8 @@ export default function App() {
       {currentPage === "myproblems" && (
         <MyProblems onSelectProblem={handleSelectProblem} solvedProblems={solvedProblems} />
       )}
+
+      {currentPage === "learn" && <Learn onSelectProblem={handleSelectProblem} />}
 
       {currentPage === "ranking" && <Ranking />}
 
