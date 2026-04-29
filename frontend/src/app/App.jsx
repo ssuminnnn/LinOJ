@@ -7,12 +7,14 @@ import { MyProblems } from "./components/MyProblems";
 import { Ranking } from "./components/Ranking";
 import { Learn } from "./components/Learn";
 import { ProblemSolve } from "./components/ProblemSolve";
+import { InquiryBoard } from "./components/InquiryBoard";
 
 const API = "http://localhost:3001/api";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("login");
   const [currentUser, setCurrentUser] = useState(null);
+  const [currentRole, setCurrentRole] = useState("user");
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [solvedProblems, setSolvedProblems] = useState({});
 
@@ -30,14 +32,16 @@ export default function App() {
     } catch {}
   };
 
-  const handleLogin = async (nickname) => {
+  const handleLogin = async ({ nickname, role }) => {
     setCurrentUser(nickname);
+    setCurrentRole(role || "user");
     await fetchSolvedProblems();
     setCurrentPage("problems");
   };
 
-  const handleSignup = async (nickname) => {
+  const handleSignup = async ({ nickname, role }) => {
     setCurrentUser(nickname);
+    setCurrentRole(role || "user");
     await fetchSolvedProblems();
     setCurrentPage("problems");
   };
@@ -45,6 +49,7 @@ export default function App() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setCurrentUser(null);
+    setCurrentRole("user");
     setCurrentPage("login");
     setSolvedProblems({});
   };
@@ -77,7 +82,12 @@ export default function App() {
   };
 
   const handleNavigate = (page) => {
+    const canAccessInquiries = currentRole === "admin" || currentRole === "super_admin";
     if (["problems", "learn", "myproblems", "ranking"].includes(page)) {
+      setCurrentPage(page);
+      return;
+    }
+    if (page === "inquiries" && canAccessInquiries) {
       setCurrentPage(page);
     }
   };
@@ -94,6 +104,7 @@ export default function App() {
     <div className="size-full flex flex-col">
       <Header
         currentUser={currentUser}
+        currentRole={currentRole}
         onLogin={() => setCurrentPage("login")}
         onLogout={handleLogout}
         onNavigate={handleNavigate}
@@ -111,6 +122,8 @@ export default function App() {
       {currentPage === "learn" && <Learn onSelectProblem={handleSelectProblem} />}
 
       {currentPage === "ranking" && <Ranking />}
+
+      {currentPage === "inquiries" && <InquiryBoard />}
 
       {currentPage === "solve" && selectedProblem !== null && (
         <ProblemSolve

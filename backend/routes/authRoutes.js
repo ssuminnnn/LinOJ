@@ -45,14 +45,17 @@ router.post("/register", async (req, res) => {
     return res.status(409).json({ error: "이미 사용 중인 닉네임입니다." });
   }
 
+  const [userCountRows] = await pool.execute("SELECT COUNT(*) AS count FROM users");
+  const role = userCountRows[0].count === 0 ? "super_admin" : "user";
+
   const hashed = await bcrypt.hash(password, SALT_ROUNDS);
   await pool.execute(
-    "INSERT INTO users (username, nickname, password) VALUES (?, ?, ?)",
-    [username, nickname, hashed]
+    "INSERT INTO users (username, nickname, password, role) VALUES (?, ?, ?, ?)",
+    [username, nickname, hashed, role]
   );
 
-  const token = jwt.sign({ username, nickname }, process.env.JWT_SECRET, { expiresIn: "7d" });
-  res.json({ token, username, nickname });
+  const token = jwt.sign({ username, nickname, role }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  res.json({ token, username, nickname, role });
 });
 
 // 로그인
@@ -74,8 +77,12 @@ router.post("/login", async (req, res) => {
     return res.status(401).json({ error: "아이디 또는 비밀번호가 올바르지 않습니다." });
   }
 
-  const token = jwt.sign({ username, nickname: user.nickname }, process.env.JWT_SECRET, { expiresIn: "7d" });
-  res.json({ token, username, nickname: user.nickname });
+  const token = jwt.sign(
+    { username, nickname: user.nickname, role: user.role || "user" },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+  res.json({ token, username, nickname: user.nickname, role: user.role || "user" });
 });
 
 module.exports = router;

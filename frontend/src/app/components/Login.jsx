@@ -30,7 +30,7 @@ export function Login({ onLogin, onSwitchToSignup }) {
       }
 
       localStorage.setItem("token", data.token);
-      onLogin(data.nickname);
+      onLogin({ nickname: data.nickname, role: data.role || "user" });
     } catch {
       setError("서버에 연결할 수 없습니다.");
     } finally {
