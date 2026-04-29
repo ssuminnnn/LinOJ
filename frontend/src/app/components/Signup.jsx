@@ -28,7 +28,7 @@ export function Signup({ onSignup, onSwitchToLogin }) {
     if (!nickname.trim()) return;
 
     try {
-      const res = await fetch("http://localhost:3001/api/auth/check-nickname", {
+      const res = await fetch("https://linoj-backend.onrender.com/api/auth/check-nickname", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nickname }),
@@ -79,7 +79,7 @@ export function Signup({ onSignup, onSwitchToLogin }) {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3001/api/auth/register", {
+      const res = await fetch("https://linoj-backend.onrender.com/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, nickname, password }),

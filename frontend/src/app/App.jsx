@@ -9,7 +9,7 @@ import { Learn } from "./components/Learn";
 import { ProblemSolve } from "./components/ProblemSolve";
 import { InquiryBoard } from "./components/InquiryBoard";
 
-const API = "http://localhost:3001/api";
+const API = "https://linoj-backend.onrender.com/api";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("login");

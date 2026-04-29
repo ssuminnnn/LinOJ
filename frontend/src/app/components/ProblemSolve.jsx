@@ -15,7 +15,7 @@ export function ProblemSolve({ problemId, onBack, onSolve }) {
     setHistory((prev) => [...prev, `$ ${command}`]);
 
     try {
-      const res = await fetch("http://localhost:3001/api/execute", {
+      const res = await fetch("https://linoj-backend.onrender.com/api/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ command: command.trim(), problemId }),

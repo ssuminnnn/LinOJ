@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const API = "http://localhost:3001/api";
+const API = "https://linoj-backend.onrender.com/api";
 
 export function InquiryBoard() {
   const [inquiries, setInquiries] = useState([]);
