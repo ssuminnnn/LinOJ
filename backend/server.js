@@ -9,6 +9,8 @@ app.use(cors());
 app.use(express.json());
 
 // 라우터 연결
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/problems", require("./routes/problemRoutes"));
 app.use("/api/execute", require("./routes/executeRoutes"));
 
 // 기본 테스트 라우트 (선택)
