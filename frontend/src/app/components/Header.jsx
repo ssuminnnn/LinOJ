@@ -35,6 +35,17 @@ export function Header({ currentUser, onLogin, onLogout, onNavigate, currentPage
             )}
 
             <button
+              onClick={() => onNavigate("learn")}
+              className={`transition-colors ${
+                currentPage === "learn"
+                  ? "text-blue-600 font-semibold"
+                  : "text-gray-600 hover:text-blue-600"
+              }`}
+            >
+              학습
+            </button>
+
+            <button
               onClick={() => onNavigate("ranking")}
               className={`transition-colors ${
                 currentPage === "ranking"

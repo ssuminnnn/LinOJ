@@ -4,7 +4,16 @@ const auth = require("../middleware/auth");
 
 const router = express.Router();
 
-const PROBLEM_POINTS = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 2, 6: 3 };
+const PROBLEM_POINTS = {
+  // 쉬움 (001-013) 1점
+  1:1, 2:1, 3:1, 4:1, 5:1, 6:1, 7:1, 8:1, 9:1, 10:1, 11:1, 12:1, 13:1,
+  // 보통 (101+) 2점
+  101:2, 102:2, 103:2,
+  // 어려움 (201+) 3점
+  201:3, 202:3,
+  // 매우 어려움 (301+) 5점
+  301:5, 302:5,
+};
 
 // 내 풀이 목록 조회
 router.get("/my", auth, async (req, res) => {
