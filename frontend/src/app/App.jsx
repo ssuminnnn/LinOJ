@@ -8,8 +8,9 @@ import { Ranking } from "./components/Ranking";
 import { Learn } from "./components/Learn";
 import { ProblemSolve } from "./components/ProblemSolve";
 import { InquiryBoard } from "./components/InquiryBoard";
+import { API_URL } from "./config/api";
 
-const API = "https://linoj-backend.onrender.com/api";
+const API = API_URL;
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState("login");

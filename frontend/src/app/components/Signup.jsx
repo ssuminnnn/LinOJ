@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { API_URL } from "../config/api";
 
 const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
 
@@ -28,7 +29,7 @@ export function Signup({ onSignup, onSwitchToLogin }) {
     if (!nickname.trim()) return;
 
     try {
-      const res = await fetch("https://linoj-backend.onrender.com/api/auth/check-nickname", {
+      const res = await fetch(`${API_URL}/auth/check-nickname`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nickname }),
@@ -79,7 +80,7 @@ export function Signup({ onSignup, onSwitchToLogin }) {
 
     setLoading(true);
     try {
-      const res = await fetch("https://linoj-backend.onrender.com/api/auth/register", {
+      const res = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, nickname, password }),
