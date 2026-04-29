@@ -5,7 +5,7 @@ export function Ranking() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:3001/api/problems/ranking")
+    fetch("https://linoj-backend.onrender.com/api/problems/ranking")
       .then((res) => res.json())
       .then((data) => setRankings(data))
       .catch(() => {})

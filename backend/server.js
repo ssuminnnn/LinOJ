@@ -10,6 +10,8 @@ app.use(express.json());
 
 // 라우터 연결
 app.use("/api/auth", require("./routes/authRoutes"));
+// 호환 라우트: /api/login, /api/register 등으로도 접근 가능하게 유지
+app.use("/api", require("./routes/authRoutes"));
 app.use("/api/problems", require("./routes/problemRoutes"));
 app.use("/api/execute", require("./routes/executeRoutes"));
 app.use("/api/inquiries", require("./routes/inquiryRoutes"));
