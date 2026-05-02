@@ -10,7 +10,14 @@ const pool = mysql.createPool({
   connectionLimit: 10,
 });
 
+async function tryAlter(sql) {
+  try { await pool.execute(sql); } catch (e) {
+    if (e.code !== "ER_DUP_FIELDNAME" && e.code !== "ER_DUP_KEYNAME") throw e;
+  }
+}
+
 async function initDB() {
+  // ── users 테이블 ─────────────────────────────────────────────────────────
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS users (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -21,47 +28,81 @@ async function initDB() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  // 기존 테이블(users)에 role 컬럼이 없던 경우를 대비한 마이그레이션
-  try {
-    await pool.execute(`
-      ALTER TABLE users
-      ADD COLUMN role ENUM('user', 'admin', 'super_admin') NOT NULL DEFAULT 'user'
-    `);
-  } catch (error) {
-    if (error.code !== "ER_DUP_FIELDNAME") {
-      throw error;
-    }
-  }
+  await tryAlter("ALTER TABLE users ADD COLUMN role ENUM('user','admin','super_admin') NOT NULL DEFAULT 'user'");
+
+  // ── user_problems 테이블 ──────────────────────────────────────────────────
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS user_problems (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      user_id INT NOT NULL,
-      problem_id INT NOT NULL,
-      is_correct BOOLEAN NOT NULL,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      id           INT AUTO_INCREMENT PRIMARY KEY,
+      user_id      INT NOT NULL,
+      problem_id   INT NOT NULL,
+      is_correct   BOOLEAN NOT NULL DEFAULT FALSE,
+      hint_used    BOOLEAN NOT NULL DEFAULT FALSE,
+      answer_viewed BOOLEAN NOT NULL DEFAULT FALSE,
+      points_earned INT NOT NULL DEFAULT 0,
+      updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       UNIQUE KEY unique_user_problem (user_id, problem_id),
       FOREIGN KEY (user_id) REFERENCES users(id)
     )
   `);
+  // 기존 테이블 마이그레이션
+  await tryAlter("ALTER TABLE user_problems ADD COLUMN hint_used BOOLEAN NOT NULL DEFAULT FALSE");
+  await tryAlter("ALTER TABLE user_problems ADD COLUMN answer_viewed BOOLEAN NOT NULL DEFAULT FALSE");
+  await tryAlter("ALTER TABLE user_problems ADD COLUMN points_earned INT NOT NULL DEFAULT 0");
+  await tryAlter("ALTER TABLE user_problems ADD COLUMN clean_solve BOOLEAN NOT NULL DEFAULT FALSE");
+
+  // ── inquiries 테이블 ──────────────────────────────────────────────────────
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS inquiries (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      user_id INT NOT NULL,
-      title VARCHAR(100) NOT NULL,
-      content TEXT NOT NULL,
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      user_id    INT NOT NULL,
+      title      VARCHAR(200) NOT NULL,
+      content    TEXT NOT NULL,
+      images     JSON,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id)
     )
   `);
-  // 운영자 계정이 아직 없는 경우, 가장 먼저 가입한 계정 1명을 super_admin으로 승격
+  await tryAlter("ALTER TABLE inquiries ADD COLUMN images JSON");
+
+  // ── inquiry_comments 테이블 ───────────────────────────────────────────────
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS inquiry_comments (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      inquiry_id INT NOT NULL,
+      user_id    INT NOT NULL,
+      content    TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (inquiry_id) REFERENCES inquiries(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id)    REFERENCES users(id)
+    )
+  `);
+
+  // ── notifications 테이블 ──────────────────────────────────────────────────
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      user_id    INT NOT NULL,
+      type       ENUM('new_inquiry','new_reply','announcement') NOT NULL DEFAULT 'announcement',
+      title      VARCHAR(200) NOT NULL,
+      message    TEXT,
+      is_read    BOOLEAN NOT NULL DEFAULT FALSE,
+      related_id INT DEFAULT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // ── 운영자 계정 승격 ──────────────────────────────────────────────────────
   const [admins] = await pool.execute(
     "SELECT id FROM users WHERE role IN ('admin', 'super_admin') LIMIT 1"
   );
   if (admins.length === 0) {
     await pool.execute(
-      "UPDATE users SET role = 'super_admin' WHERE id = (SELECT id FROM (SELECT id FROM users ORDER BY id ASC LIMIT 1) AS first_user)"
+      "UPDATE users SET role = 'super_admin' WHERE id = (SELECT id FROM (SELECT id FROM users ORDER BY id ASC LIMIT 1) AS t)"
     );
   }
+
   console.log("DB 연결 및 테이블 초기화 완료");
 }
 
