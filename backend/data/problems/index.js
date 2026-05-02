@@ -1,5 +1,67 @@
-const problem1 = require("./problem1");
-
-module.exports = [
-  problem1
+const problems = [
+  // 쉬움 (1-13)
+  { id: 1, answer: "pwd" },
+  { id: 2, answer: "ls" },
+  { id: 3, answer: "ls -l" },
+  { id: 4, answer: "ls -a" },
+  { id: 5, answer: "cat file.txt" },
+  { id: 6, answer: "head -n 5 file.txt" },
+  { id: 7, answer: "tail -n 5 file.txt" },
+  { id: 8, answer: "ls | wc -l" },
+  { id: 9, answer: "grep error file.txt" },
+  { id: 10, answer: "grep error file.txt | wc -l" },
+  { id: 11, answer: "cp a.txt b.txt" },
+  { id: 12, answer: "mv a.txt b.txt" },
+  { id: 13, answer: "rm -r dir" },
+  // 보통 (101-103)
+  { id: 101, answer: "mkdir myproject" },
+  { id: 102, answer: "find . -name '*.txt'" },
+  { id: 103, answer: "ls | wc -l" },
+  // 어려움 (201-230)
+  { id: 201, answer: "ps aux" },
+  { id: 202, answer: "kill -9 1234" },
+  { id: 203, answer: "wc -l file.txt" },
+  { id: 204, answer: "wc -w file.txt" },
+  { id: 205, answer: "sort fruits.txt" },
+  { id: 206, answer: "sort file.txt | uniq" },
+  { id: 207, answer: "sort file.txt | uniq | wc -l" },
+  { id: 208, answer: "grep -n \"error\" file.txt" },
+  { id: 209, answer: "grep -c \"error\" file.txt" },
+  { id: 210, answer: "grep -i \"error\" file.txt" },
+  { id: 211, answer: "grep -r \"TODO\" ." },
+  { id: 212, answer: "sed 's/hello/world/g' file.txt" },
+  { id: 213, answer: "sed -n '3p' file.txt" },
+  { id: 214, answer: "awk '{print $1}' data.txt" },
+  { id: 215, answer: "cut -d: -f1 users.txt" },
+  { id: 216, answer: "sort -n numbers.txt" },
+  { id: 217, answer: "sort -r file.txt" },
+  { id: 218, answer: "find . -name \"*.txt\"" },
+  { id: 219, answer: "cat -n file.txt" },
+  { id: 220, answer: "ln -s file.txt link.txt" },
+  { id: 221, answer: "diff file1.txt file2.txt" },
+  { id: 222, answer: "cat file.txt | tr 'a-z' 'A-Z'" },
+  { id: 223, answer: "ls -lh" },
+  { id: 224, answer: "chmod 755 script.sh" },
+  { id: 225, answer: "find . -name \"*.txt\" | wc -l" },
+  { id: 226, answer: "awk '{sum+=$1} END{print sum}' numbers.txt" },
+  { id: 227, answer: "cut -d, -f2 data.csv" },
+  { id: 228, answer: "grep -v \"^$\" file.txt" },
+  { id: 229, answer: "sort -k2 data.txt" },
+  { id: 230, answer: "du -sh ." },
+  // 매우 어려움 (301-310)
+  { id: 301, answer: "chmod +x script.sh" },
+  { id: 302, answer: "tar -czf archive.tar.gz files/" },
+  { id: 303, answer: "awk -F, '{sum+=$2} END{print sum}' scores.csv" },
+  { id: 304, answer: "find . -name '.*' -type f | wc -l" },
+  { id: 305, answer: "sed '/^$/d' file.txt" },
+  { id: 306, answer: "grep -v \"^#\" config.txt" },
+  { id: 307, answer: "find . -name \"*.log\" | xargs grep \"ERROR\"" },
+  { id: 308, answer: "sort -t, -k2 -n data.csv" },
+  { id: 309, answer: "awk '$2 > 80 {print $1}' scores.txt" },
+  { id: 310, answer: "cat file.txt | tr ' ' '\\n' | sort | uniq | wc -l" },
 ];
+
+module.exports = problems.map((problem) => ({
+  id: problem.id,
+  check: (command) => command.trim() === problem.answer,
+}));

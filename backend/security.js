@@ -4,6 +4,9 @@ const ALLOWED_COMMANDS = new Set([
   "echo", "mkdir", "cp", "mv", "rm", "find", "ps",
   "date", "whoami", "uname", "sort", "uniq", "diff",
   "touch", "stat", "file", "which", "basename", "dirname",
+  "awk", "sed", "tr", "cut", "xargs", "tar", "ln",
+  "chmod", "kill", "du", "tee",
+  "cd",   // 디렉토리 이동 (executeRoutes에서 직접 처리)
 ]);
 
 // 위험 패턴 목록 (정규식 + 설명)
