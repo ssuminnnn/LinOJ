@@ -20,6 +20,7 @@ app.use("/api/problems", require("./routes/problemRoutes"));
 app.use("/api/execute", require("./routes/executeRoutes"));
 app.use("/api/inquiries", require("./routes/inquiryRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
+app.use("/api/notices", require("./routes/noticeRoutes"));
 
 // 기본 테스트 라우트 (선택)
 app.get("/", (req, res) => {

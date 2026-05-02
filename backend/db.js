@@ -65,6 +65,18 @@ async function initDB() {
   `);
   await tryAlter("ALTER TABLE inquiries ADD COLUMN images JSON");
 
+  // ── notices 테이블 ────────────────────────────────────────────────────────
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS notices (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      user_id    INT NOT NULL,
+      title      VARCHAR(200) NOT NULL,
+      content    TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+  `);
+
   // ── inquiry_comments 테이블 ───────────────────────────────────────────────
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS inquiry_comments (

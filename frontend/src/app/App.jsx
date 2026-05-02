@@ -8,6 +8,7 @@ import { Ranking } from "./components/Ranking";
 import { Learn } from "./components/Learn";
 import { ProblemSolve } from "./components/ProblemSolve";
 import { InquiryBoard } from "./components/InquiryBoard";
+import { NoticePage } from "./components/NoticePage";
 import { API_URL } from "./config/api";
 
 const API = API_URL;
@@ -243,7 +244,7 @@ export default function App() {
   };
 
   const handleNavigate = (page) => {
-    if (["problems", "learn", "myproblems", "ranking"].includes(page)) {
+    if (["problems", "learn", "myproblems", "ranking", "notices"].includes(page)) {
       setCurrentPage(page);
     } else if (page === "inquiries" && currentUser) {
       setCurrentPage(page);
@@ -300,6 +301,10 @@ export default function App() {
       )}
 
       {currentPage === "ranking" && <Ranking />}
+
+      {currentPage === "notices" && (
+        <NoticePage currentRole={currentRole} />
+      )}
 
       {currentPage === "inquiries" && (
         <InquiryBoard
