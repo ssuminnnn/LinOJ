@@ -30,7 +30,10 @@ export default function App() {
     const token = localStorage.getItem("token");
     if (!token) { setCurrentPage("login"); return; }
     try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
+      // JWT는 base64url 인코딩 사용 (- / _ 문자) → atob 전에 표준 base64로 변환 필요
+      const base64url = token.split(".")[1];
+      const base64    = base64url.replace(/-/g, "+").replace(/_/g, "/");
+      const payload   = JSON.parse(atob(base64));
       if (payload.exp * 1000 < Date.now()) {
         localStorage.removeItem("token");
         setCurrentPage("login");
