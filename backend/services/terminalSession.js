@@ -84,6 +84,45 @@ function setupProblemFiles(homeDir) {
       fs.writeFileSync(path.join(homeDir, "dir", "file2.txt"), "content2\n");
     }
 
+    // 14번: echo "Hello World"
+    // 파일 불필요
+
+    // 15번: touch newfile.txt
+    // 파일 불필요
+
+    // 16번: cat file1.txt file2.txt
+    if (id === 16) {
+      fs.writeFileSync(path.join(homeDir, "file1.txt"), "Hello\n");
+      fs.writeFileSync(path.join(homeDir, "file2.txt"), "World\n");
+    }
+
+    // 17번: ls -la
+    if (id === 17) {
+      fs.mkdirSync(path.join(homeDir, "documents"), { recursive: true });
+      fs.mkdirSync(path.join(homeDir, "downloads"), { recursive: true });
+      fs.writeFileSync(path.join(homeDir, "readme.txt"), "Welcome!\n");
+      fs.writeFileSync(path.join(homeDir, ".bashrc"), "# .bashrc\n");
+    }
+
+    // 18번: head file.txt (앞 10줄, 기본값)
+    if (id === 18) {
+      fs.writeFileSync(
+        path.join(homeDir, "file.txt"),
+        "line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8\nline9\nline10\nline11\nline12\nline13\nline14\nline15\n"
+      );
+    }
+
+    // 19번: tail file.txt (뒤 10줄, 기본값)
+    if (id === 19) {
+      fs.writeFileSync(
+        path.join(homeDir, "file.txt"),
+        "line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8\nline9\nline10\nline11\nline12\nline13\nline14\nline15\n"
+      );
+    }
+
+    // 20번: echo $HOME
+    // 파일 불필요
+
     // 102번: find . -name '*.txt'
     if (id === 102) {
       fs.mkdirSync(path.join(homeDir, "notes"), { recursive: true });
@@ -277,6 +316,107 @@ function setupProblemFiles(homeDir) {
     if (id === 230) {
       fs.writeFileSync(path.join(homeDir, "file.txt"), "some content\n");
       fs.writeFileSync(path.join(homeDir, "readme.txt"), "readme\n");
+    }
+
+    // 104번: find . -type f
+    if (id === 104) {
+      fs.mkdirSync(path.join(homeDir, "subdir"), { recursive: true });
+      fs.writeFileSync(path.join(homeDir, "readme.txt"), "readme\n");
+      fs.writeFileSync(path.join(homeDir, "notes.txt"), "notes\n");
+      fs.writeFileSync(path.join(homeDir, "subdir", "config.txt"), "config\n");
+    }
+
+    // 105번: find . -type d
+    if (id === 105) {
+      fs.mkdirSync(path.join(homeDir, "src"), { recursive: true });
+      fs.mkdirSync(path.join(homeDir, "docs"), { recursive: true });
+      fs.writeFileSync(path.join(homeDir, "readme.txt"), "readme\n");
+    }
+
+    // 106번: find . -name '*.sh'
+    if (id === 106) {
+      fs.mkdirSync(path.join(homeDir, "scripts"), { recursive: true });
+      fs.writeFileSync(path.join(homeDir, "start.sh"), "#!/bin/bash\necho start\n");
+      fs.writeFileSync(path.join(homeDir, "scripts", "deploy.sh"), "#!/bin/bash\necho deploy\n");
+      fs.writeFileSync(path.join(homeDir, "readme.txt"), "readme\n");
+    }
+
+    // 107번: grep -l "error" *.log
+    if (id === 107) {
+      fs.writeFileSync(path.join(homeDir, "app.log"), "INFO: started\nerror: disk full\n");
+      fs.writeFileSync(path.join(homeDir, "access.log"), "GET /api 200\nerror: timeout\n");
+      fs.writeFileSync(path.join(homeDir, "system.log"), "INFO: boot ok\nINFO: running\n");
+    }
+
+    // 108번: sort -u file.txt
+    if (id === 108) {
+      fs.writeFileSync(path.join(homeDir, "file.txt"), "banana\napple\nbanana\ncherry\napple\n");
+    }
+
+    // 109번: cut -d, -f1 data.csv
+    if (id === 109) {
+      fs.writeFileSync(path.join(homeDir, "data.csv"), "Alice,25,Seoul\nBob,30,Busan\nCharlie,22,Daegu\n");
+    }
+
+    // 110번: wc -c file.txt
+    if (id === 110) {
+      fs.writeFileSync(path.join(homeDir, "file.txt"), "Hello World\n");
+    }
+
+    // 111번: head -n 1 file.txt
+    if (id === 111) {
+      fs.writeFileSync(path.join(homeDir, "file.txt"), "first line\nsecond line\nthird line\n");
+    }
+
+    // 112번: tail -n 1 file.txt
+    if (id === 112) {
+      fs.writeFileSync(path.join(homeDir, "file.txt"), "first line\nsecond line\nthird line\n");
+    }
+
+    // 113번: ls -lt
+    if (id === 113) {
+      fs.writeFileSync(path.join(homeDir, "readme.txt"), "readme\n");
+      fs.writeFileSync(path.join(homeDir, "notes.txt"), "notes\n");
+      fs.mkdirSync(path.join(homeDir, "docs"), { recursive: true });
+    }
+
+    // 114번: ls -lS
+    if (id === 114) {
+      fs.writeFileSync(path.join(homeDir, "big.txt"), "a".repeat(200));
+      fs.writeFileSync(path.join(homeDir, "small.txt"), "hi\n");
+      fs.writeFileSync(path.join(homeDir, "medium.txt"), "b".repeat(100));
+    }
+
+    // 115번: echo "Hello" > hello.txt
+    // 파일 불필요
+
+    // 116번: cat a.txt >> b.txt
+    if (id === 116) {
+      fs.writeFileSync(path.join(homeDir, "a.txt"), "appended line\n");
+      fs.writeFileSync(path.join(homeDir, "b.txt"), "existing content\n");
+    }
+
+    // 117번: grep -w "hello" file.txt
+    if (id === 117) {
+      fs.writeFileSync(path.join(homeDir, "file.txt"), "hello world\nhelloworld\nsay hello\n");
+    }
+
+    // 118번: find . -maxdepth 1 -type f
+    if (id === 118) {
+      fs.mkdirSync(path.join(homeDir, "subdir"), { recursive: true });
+      fs.writeFileSync(path.join(homeDir, "readme.txt"), "readme\n");
+      fs.writeFileSync(path.join(homeDir, "notes.txt"), "notes\n");
+      fs.writeFileSync(path.join(homeDir, "subdir", "hidden.txt"), "hidden\n");
+    }
+
+    // 119번: sort file.txt | uniq -c
+    if (id === 119) {
+      fs.writeFileSync(path.join(homeDir, "file.txt"), "apple\nbanana\napple\ncherry\nbanana\napple\n");
+    }
+
+    // 120번: awk 'NR==3' file.txt
+    if (id === 120) {
+      fs.writeFileSync(path.join(homeDir, "file.txt"), "first\nsecond\nthird\nfourth\nfifth\n");
     }
 
     // 302번: tar -czf archive.tar.gz files/

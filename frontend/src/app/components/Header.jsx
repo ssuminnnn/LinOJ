@@ -20,7 +20,11 @@ export function Header({
 
   const handleNotifClick = (notif) => {
     if (!notif.is_read) onMarkRead?.(notif.id);
-    if (notif.related_id) onNavigate?.("inquiries");
+    if (notif.type === "announcement" && notif.related_id) {
+      onNavigate?.("notices");
+    } else if (notif.type === "new_inquiry" || notif.type === "new_reply") {
+      onNavigate?.("inquiries");
+    }
     setNotifOpen(false);
   };
 
@@ -80,6 +84,17 @@ export function Header({
             >
               랭킹
             </button>
+
+            {currentUser && (
+              <button
+                onClick={() => onNavigate("notices")}
+                className={`transition-colors ${
+                  currentPage === "notices" ? "text-blue-600 font-semibold" : "text-gray-600 hover:text-blue-600"
+                }`}
+              >
+                공지
+              </button>
+            )}
 
             {currentUser && (
               <button

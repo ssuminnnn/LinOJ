@@ -1,5 +1,5 @@
 const problems = [
-  // 쉬움 (1-13)
+  // 쉬움 (1-13) - 기존 유지
   { id: 1, answer: "pwd" },
   { id: 2, answer: "ls" },
   { id: 3, answer: "ls -l" },
@@ -13,11 +13,37 @@ const problems = [
   { id: 11, answer: "cp a.txt b.txt" },
   { id: 12, answer: "mv a.txt b.txt" },
   { id: 13, answer: "rm -r dir" },
-  // 보통 (101-103)
+  // 쉬움 (14-20) - 신규
+  { id: 14, answer: 'echo "Hello World"' },
+  { id: 15, answer: "touch newfile.txt" },
+  { id: 16, answer: "cat file1.txt file2.txt" },
+  { id: 17, answer: "ls -la" },
+  { id: 18, answer: "head file.txt" },
+  { id: 19, answer: "tail file.txt" },
+  { id: 20, answer: "echo $HOME" },
+  // 보통 (101-103) - 기존 유지
   { id: 101, answer: "mkdir myproject" },
   { id: 102, answer: "find . -name '*.txt'" },
   { id: 103, answer: "ls | wc -l" },
-  // 어려움 (201-230)
+  // 보통 (104-120) - 신규
+  { id: 104, answer: "find . -type f" },
+  { id: 105, answer: "find . -type d" },
+  { id: 106, answer: "find . -name '*.sh'" },
+  { id: 107, answer: "grep -l \"error\" *.log" },
+  { id: 108, answer: "sort -u file.txt" },
+  { id: 109, answer: "cut -d, -f1 data.csv" },
+  { id: 110, answer: "wc -c file.txt" },
+  { id: 111, answer: "head -n 1 file.txt" },
+  { id: 112, answer: "tail -n 1 file.txt" },
+  { id: 113, answer: "ls -lt" },
+  { id: 114, answer: "ls -lS" },
+  { id: 115, answer: 'echo "Hello" > hello.txt' },
+  { id: 116, answer: "cat a.txt >> b.txt" },
+  { id: 117, answer: "grep -w \"hello\" file.txt" },
+  { id: 118, answer: "find . -maxdepth 1 -type f" },
+  { id: 119, answer: "sort file.txt | uniq -c" },
+  { id: 120, answer: "awk 'NR==3' file.txt" },
+  // 어려움 (201-230) - 기존 유지
   { id: 201, answer: "ps aux" },
   { id: 202, answer: "kill -9 1234" },
   { id: 203, answer: "wc -l file.txt" },
@@ -48,7 +74,7 @@ const problems = [
   { id: 228, answer: "grep -v \"^$\" file.txt" },
   { id: 229, answer: "sort -k2 data.txt" },
   { id: 230, answer: "du -sh ." },
-  // 매우 어려움 (301-310)
+  // 매우 어려움 (301-310) - 기존 유지
   { id: 301, answer: "chmod +x script.sh" },
   { id: 302, answer: "tar -czf archive.tar.gz files/" },
   { id: 303, answer: "awk -F, '{sum+=$2} END{print sum}' scores.csv" },
