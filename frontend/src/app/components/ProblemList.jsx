@@ -8,12 +8,18 @@ const difficultyStyle = {
 };
 
 export function ProblemList({ onSelectProblem, solvedProblems = {} }) {
+  const totalPoints = Object.values(solvedProblems).reduce((s, p) => s + (p.pointsEarned || 0), 0);
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-6">
+
         <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h2 className="text-xl font-bold text-gray-900">문제 목록</h2>
+            <div className="text-sm text-gray-500">
+              총 점수 <span className="text-blue-600 font-bold text-base ml-1">{totalPoints}점</span>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -35,9 +41,9 @@ export function ProblemList({ onSelectProblem, solvedProblems = {} }) {
                     className="hover:bg-gray-50 cursor-pointer transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {solvedProblems[problem.id] === true ? (
+                      {solvedProblems[problem.id]?.isCorrect === true ? (
                         <span className="text-green-600 text-xl">✓</span>
-                      ) : solvedProblems[problem.id] === false ? (
+                      ) : solvedProblems[problem.id] !== undefined ? (
                         <span className="text-red-600 text-xl">✗</span>
                       ) : (
                         <span className="text-gray-300 text-xl">○</span>

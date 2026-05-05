@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { formatId } from "../data/problems";
 
 const chapters = [
@@ -67,7 +67,7 @@ const chapters = [
         cmd: "wc -l", desc: "입력받은 내용의 줄 수 출력",
         example: "$ wc -l file.txt\n10 file.txt\n\n$ ls | wc -l\n5",
         tip: "wc는 Word Count의 약자입니다. -l은 줄 수, -w는 단어 수, -c는 바이트 수를 셉니다.",
-        problemId: null,
+        problemId: 103, problemTitle: "줄 수 세기",
       },
     ],
   },
@@ -130,7 +130,7 @@ const chapters = [
         cmd: "kill", desc: "프로세스 종료",
         example: "$ kill 1234      # 일반 종료\n$ kill -9 1234   # 강제 종료",
         tip: "-9 옵션은 강제 종료로, 응답 없는 프로세스를 죽일 때 사용합니다.",
-        problemId: null,
+        problemId: 202, problemTitle: "프로세스 종료",
       },
     ],
   },
@@ -141,21 +141,32 @@ const chapters = [
         cmd: "chmod", desc: "파일·디렉토리 권한 변경",
         example: "$ chmod 755 script.sh\n$ chmod +x script.sh",
         tip: "7=rwx, 5=r-x, 4=r-- 처럼 숫자로 권한을 표현합니다.",
-        problemId: null,
+        problemId: 301, problemTitle: "실행 권한 부여",
       },
       {
         cmd: "sudo", desc: "관리자 권한으로 명령어 실행",
         example: "$ sudo apt install vim",
         tip: "⚠️ sudo는 강력한 권한이므로 신중하게 사용해야 합니다.",
-        problemId: null,
+        problemId: 302, problemTitle: "관리자 권한 실행",
       },
     ],
   },
 ];
 
-export function Learn({ onSelectProblem }) {
+export function Learn({ onSelectProblem, initialChapterId, onChapterOpened, solvedProblems = {} }) {
   const [selectedChapter, setSelectedChapter] = useState(chapters[0]);
   const [expandedCmd, setExpandedCmd] = useState(null);
+
+  // 힌트에서 "학습으로 이동" 클릭 시 해당 챕터로 자동 이동
+  useEffect(() => {
+    if (!initialChapterId) return;
+    const chapter = chapters.find((c) => c.id === initialChapterId);
+    if (chapter) {
+      setSelectedChapter(chapter);
+      setExpandedCmd(null);
+    }
+    onChapterOpened?.();
+  }, [initialChapterId]); // eslint-disable-line
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -206,11 +217,19 @@ export function Learn({ onSelectProblem }) {
                     <span className="text-gray-700 text-sm">{item.desc}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    {item.problemId && (
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
-                        연습문제 있음
-                      </span>
-                    )}
+                    {item.problemId && (() => {
+                      const info = solvedProblems[item.problemId];
+                      if (!info) return (
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                          연습문제 있음
+                        </span>
+                      );
+                      return info.isCorrect ? (
+                        <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full font-medium">✓ 정답</span>
+                      ) : (
+                        <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">✗ 오답</span>
+                      );
+                    })()}
                     <span className="text-gray-400">{expandedCmd === item.cmd ? "▲" : "▼"}</span>
                   </div>
                 </button>
@@ -227,22 +246,33 @@ export function Learn({ onSelectProblem }) {
                       <span className="text-sm">💡</span>
                       <p className="text-blue-700 text-sm">{item.tip}</p>
                     </div>
-                    {item.problemId && (
-                      <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded p-4">
-                        <div>
-                          <p className="text-sm font-semibold text-green-800">연습문제</p>
-                          <p className="text-sm text-green-700 mt-0.5">
-                            {formatId(item.problemId)} · {item.problemTitle}
-                          </p>
+                    {item.problemId && (() => {
+                      const info = solvedProblems[item.problemId];
+                      const solved = info?.isCorrect === true;
+                      const attempted = !!info;
+                      return (
+                        <div className={`flex items-center justify-between border rounded p-4 ${
+                          solved ? "bg-green-50 border-green-200" : attempted ? "bg-red-50 border-red-200" : "bg-green-50 border-green-200"
+                        }`}>
+                          <div>
+                            <p className={`text-sm font-semibold ${solved ? "text-green-800" : attempted ? "text-red-800" : "text-green-800"}`}>
+                              연습문제 {solved ? "✓ 정답" : attempted ? "✗ 오답" : ""}
+                            </p>
+                            <p className={`text-sm mt-0.5 ${solved ? "text-green-700" : attempted ? "text-red-700" : "text-green-700"}`}>
+                              {formatId(item.problemId)} · {item.problemTitle}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => onSelectProblem(item.problemId)}
+                            className={`text-white px-4 py-2 rounded text-sm font-semibold transition-colors ${
+                              solved ? "bg-green-600 hover:bg-green-700" : attempted ? "bg-red-500 hover:bg-red-600" : "bg-green-600 hover:bg-green-700"
+                            }`}
+                          >
+                            {solved ? "다시 풀기" : attempted ? "다시 풀기" : "문제 풀기 →"}
+                          </button>
                         </div>
-                        <button
-                          onClick={() => onSelectProblem(item.problemId)}
-                          className="bg-green-600 text-white px-4 py-2 rounded text-sm font-semibold hover:bg-green-700 transition-colors"
-                        >
-                          문제 풀기 →
-                        </button>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 )}
               </div>

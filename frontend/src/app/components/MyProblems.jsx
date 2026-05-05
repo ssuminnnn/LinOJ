@@ -8,10 +8,9 @@ const difficultyStyle = {
 };
 
 export function MyProblems({ onSelectProblem, solvedProblems = {} }) {
-  const attempted = PROBLEMS.filter((p) => solvedProblems[p.id] !== undefined);
-  const correctCount = Object.values(solvedProblems).filter((v) => v === true).length;
-  const totalPoints = PROBLEMS.filter((p) => solvedProblems[p.id] === true)
-    .reduce((sum, p) => sum + p.points, 0);
+  const attempted     = PROBLEMS.filter((p) => solvedProblems[p.id] !== undefined);
+  const correctCount  = attempted.filter((p) => solvedProblems[p.id]?.isCorrect === true).length;
+  const totalPoints   = attempted.reduce((sum, p) => sum + (solvedProblems[p.id]?.pointsEarned || 0), 0);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -46,39 +45,47 @@ export function MyProblems({ onSelectProblem, solvedProblems = {} }) {
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-24">번호</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">제목</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-32">난이도</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-24">점수</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-24">획득 점수</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-24">비고</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {attempted.map((problem) => (
-                    <tr
-                      key={problem.id}
-                      onClick={() => onSelectProblem(problem.id)}
-                      className="hover:bg-gray-50 cursor-pointer transition-colors"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {solvedProblems[problem.id] ? (
-                          <span className="text-green-600 text-xl font-bold">✓</span>
-                        ) : (
-                          <span className="text-red-600 text-xl font-bold">✗</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="font-mono text-sm text-gray-500">{formatId(problem.id)}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-medium text-gray-900">{problem.title}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${difficultyStyle[problem.difficulty]}`}>
-                          {problem.difficulty}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {problem.points}점
-                      </td>
-                    </tr>
-                  ))}
+                  {attempted.map((problem) => {
+                    const info = solvedProblems[problem.id] || {};
+                    return (
+                      <tr
+                        key={problem.id}
+                        onClick={() => onSelectProblem(problem.id)}
+                        className="hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {info.isCorrect ? (
+                            <span className="text-green-600 text-xl font-bold">✓</span>
+                          ) : (
+                            <span className="text-red-600 text-xl font-bold">✗</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="font-mono text-sm text-gray-500">{formatId(problem.id)}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm font-medium text-gray-900">{problem.title}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${difficultyStyle[problem.difficulty]}`}>
+                            {problem.difficulty}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600">
+                          {info.pointsEarned || 0}점
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                          {info.answerViewed && <span className="text-red-500">정답 확인</span>}
+                          {!info.answerViewed && info.hintUsed && <span className="text-yellow-600">힌트 사용</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
