@@ -46,7 +46,7 @@ router.post("/register", async (req, res) => {
   }
 
   const [userCountRows] = await pool.execute("SELECT COUNT(*) AS count FROM users");
-  const role = userCountRows[0].count === 0 ? "super_admin" : "user";
+  const role = parseInt(userCountRows[0].count, 10) === 0 ? "super_admin" : "user";
 
   const hashed = await bcrypt.hash(password, SALT_ROUNDS);
   await pool.execute(

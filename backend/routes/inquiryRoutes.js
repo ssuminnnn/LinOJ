@@ -68,10 +68,10 @@ router.post("/", auth, (req, res, next) => {
     const imageUrls = req.files ? req.files.map((f) => `/uploads/${f.filename}`) : [];
 
     const [result] = await pool.execute(
-      "INSERT INTO inquiries (user_id, title, content, images) VALUES (?, ?, ?, ?)",
+      "INSERT INTO inquiries (user_id, title, content, images) VALUES (?, ?, ?, ?) RETURNING id",
       [userId, title.trim(), content.trim(), JSON.stringify(imageUrls)]
     );
-    const inquiryId = result.insertId;
+    const inquiryId = result[0].id;
 
     // 모든 운영자에게 알림
     const [admins] = await pool.execute(

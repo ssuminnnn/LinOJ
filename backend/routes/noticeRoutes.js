@@ -36,10 +36,10 @@ router.post("/", auth, requireAdmin, async (req, res) => {
     if (users.length === 0) return res.status(404).json({ error: "사용자를 찾을 수 없습니다." });
 
     const [result] = await pool.execute(
-      "INSERT INTO notices (user_id, title, content) VALUES (?, ?, ?)",
+      "INSERT INTO notices (user_id, title, content) VALUES (?, ?, ?) RETURNING id",
       [users[0].id, title.trim(), content.trim()]
     );
-    const noticeId = result.insertId;
+    const noticeId = result[0].id;
 
     // 모든 사용자에게 알림 발송
     const [allUsers] = await pool.execute("SELECT id FROM users");

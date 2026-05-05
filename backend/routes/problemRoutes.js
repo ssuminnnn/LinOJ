@@ -29,9 +29,9 @@ router.get("/my", auth, async (req, res) => {
 
   const solvedProblems = {};
   rows.forEach((r) => {
-    const isCorrect    = r.is_correct === 1;
-    const hintUsed     = r.hint_used === 1;
-    const answerViewed = r.answer_viewed === 1;
+    const isCorrect    = r.is_correct === true;
+    const hintUsed     = r.hint_used === true;
+    const answerViewed = r.answer_viewed === true;
 
     // 이미 맞혔는데 점수가 0이면 소급 계산 (점수 체계 도입 전 데이터 보정)
     let pointsEarned = r.points_earned;
@@ -45,7 +45,7 @@ router.get("/my", auth, async (req, res) => {
       hintUsed,
       answerViewed,
       pointsEarned,
-      cleanSolve: r.clean_solve === 1,
+      cleanSolve: r.clean_solve === true,
     };
   });
 
@@ -83,25 +83,21 @@ router.post("/solve", auth, async (req, res) => {
   }
 
   const prev           = existing[0];
-  const wasAnswerViewed = prev.answer_viewed === 1;
-  const wasCorrect      = prev.is_correct === 1;
+  const wasAnswerViewed = prev.answer_viewed === true;
+  const wasCorrect      = prev.is_correct === true;
 
   // 정답 보기를 했던 문제 → 이미 맞혔으면 correct 유지, 아니면 추가 점수 없음
   if (wasAnswerViewed) {
-    // 이미 맞힌 상태면 correct 그대로 (is_correct는 DB에 TRUE로 저장됨)
     return res.json({ ok: true, pointsEarned: 0, wasCorrect });
   }
 
   // 이번에 정답 보기 클릭
   if (answerViewed) {
-    // 이미 맞힌 문제면 is_correct 유지, 아직 못 풀었으면 FALSE
     await pool.execute(
       `UPDATE user_problems
-       SET answer_viewed=TRUE,
-           is_correct = is_correct,
-           points_earned = points_earned,
-           updated_at=CURRENT_TIMESTAMP
-       WHERE user_id=? AND problem_id=?`,
+       SET answer_viewed = TRUE,
+           updated_at = NOW()
+       WHERE user_id = ? AND problem_id = ?`,
       [userId, problemId]
     );
     return res.json({ ok: true, pointsEarned: 0, wasCorrect });
@@ -111,50 +107,47 @@ router.post("/solve", auth, async (req, res) => {
   if (wasCorrect) {
     // 점수가 0점인 기존 기록은 소급 적용 (예: 점수 체계 도입 전 데이터)
     if (prev.points_earned === 0) {
-      const prevHintUsed = prev.hint_used === 1;
+      const prevHintUsed = prev.hint_used === true;
       const retroPoints = prevHintUsed ? Math.floor(basePoints / 2) : basePoints;
       await pool.execute(
-        "UPDATE user_problems SET points_earned=? WHERE user_id=? AND problem_id=?",
+        "UPDATE user_problems SET points_earned = ?, updated_at = NOW() WHERE user_id = ? AND problem_id = ?",
         [retroPoints, userId, problemId]
       );
       return res.json({ ok: true, pointsEarned: retroPoints });
     }
-    if (hintUsed && prev.hint_used === 0) {
-      await pool.execute("UPDATE user_problems SET hint_used=TRUE WHERE user_id=? AND problem_id=?", [userId, problemId]);
+    if (hintUsed && prev.hint_used === false) {
+      await pool.execute("UPDATE user_problems SET hint_used = TRUE, updated_at = NOW() WHERE user_id = ? AND problem_id = ?", [userId, problemId]);
     }
     return res.json({ ok: true, pointsEarned: 0 });
   }
 
   // 처음으로 맞힌 경우
   if (isCorrect) {
-    const newHintUsed  = hintUsed || prev.hint_used === 1;
+    const newHintUsed  = hintUsed || prev.hint_used === true;
     const pointsEarned = newHintUsed ? Math.floor(basePoints / 2) : basePoints;
-    // clean_solve: 힌트 없이, 정답 보기 없이 처음 맞힌 경우만 TRUE
-    const cleanSolve = !newHintUsed; // answerViewed=false & wasAnswerViewed=false 보장됨
+    const cleanSolve = !newHintUsed;
     await pool.execute(
-      `UPDATE user_problems SET is_correct=TRUE, hint_used=?, points_earned=?, clean_solve=?, updated_at=CURRENT_TIMESTAMP
-       WHERE user_id=? AND problem_id=?`,
+      `UPDATE user_problems SET is_correct = TRUE, hint_used = ?, points_earned = ?, clean_solve = ?, updated_at = NOW()
+       WHERE user_id = ? AND problem_id = ?`,
       [newHintUsed, pointsEarned, cleanSolve, userId, problemId]
     );
     return res.json({ ok: true, pointsEarned, cleanSolve });
   }
 
   // 틀린 경우: 힌트 플래그만 업데이트
-  if (hintUsed && prev.hint_used === 0) {
-    await pool.execute("UPDATE user_problems SET hint_used=TRUE WHERE user_id=? AND problem_id=?", [userId, problemId]);
+  if (hintUsed && prev.hint_used === false) {
+    await pool.execute("UPDATE user_problems SET hint_used = TRUE, updated_at = NOW() WHERE user_id = ? AND problem_id = ?", [userId, problemId]);
   }
   res.json({ ok: true, pointsEarned: 0 });
 });
 
 // ── 힌트 사용 기록 ────────────────────────────────────────────────────────
-// 기존 기록이 있으면 hint_used=TRUE, 없으면 아무것도 안 함 (목록에 미시도 유지)
-// hint_used는 첫 명령어 제출 시 /solve POST에 포함되어 함께 저장됨
 router.post("/hint", auth, async (req, res) => {
   const { problemId } = req.body;
   const [users] = await pool.execute("SELECT id FROM users WHERE username = ?", [req.user.username]);
   if (users.length === 0) return res.status(404).json({ error: "사용자를 찾을 수 없습니다." });
   await pool.execute(
-    "UPDATE user_problems SET hint_used=TRUE WHERE user_id=? AND problem_id=?",
+    "UPDATE user_problems SET hint_used = TRUE, updated_at = NOW() WHERE user_id = ? AND problem_id = ?",
     [users[0].id, problemId]
   );
   res.json({ ok: true });
@@ -165,15 +158,14 @@ router.post("/answer-viewed", auth, async (req, res) => {
   const { problemId } = req.body;
   const [users] = await pool.execute("SELECT id FROM users WHERE username = ?", [req.user.username]);
   if (users.length === 0) return res.status(404).json({ error: "사용자를 찾을 수 없습니다." });
-  // 이미 맞힌 문제는 is_correct를 TRUE로 유지, 점수도 유지
-  // 아직 못 푼 문제만 is_correct=FALSE, points_earned=0
+
+  // ON DUPLICATE KEY UPDATE → PostgreSQL ON CONFLICT
   await pool.execute(
     `INSERT INTO user_problems (user_id, problem_id, is_correct, answer_viewed, points_earned)
      VALUES (?, ?, FALSE, TRUE, 0)
-     ON DUPLICATE KEY UPDATE
+     ON CONFLICT (user_id, problem_id) DO UPDATE SET
        answer_viewed = TRUE,
-       is_correct    = is_correct,
-       points_earned = points_earned`,
+       updated_at = NOW()`,
     [users[0].id, problemId]
   );
   res.json({ ok: true });
@@ -183,7 +175,7 @@ router.post("/answer-viewed", auth, async (req, res) => {
 router.get("/ranking", async (req, res) => {
   const [users] = await pool.execute("SELECT id, nickname FROM users");
   const [solved] = await pool.execute(
-    "SELECT user_id, points_earned FROM user_problems WHERE is_correct=TRUE"
+    "SELECT user_id, points_earned FROM user_problems WHERE is_correct = TRUE"
   );
 
   const pointsMap = {};

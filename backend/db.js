@@ -1,117 +1,122 @@
-const mysql = require("mysql2/promise");
+const { Pool } = require("pg");
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
+// ── MySQL2 호환 shim ───────────────────────────────────────────────────────
+// ? 플레이스홀더를 $1, $2, ... 로 자동 변환
+// 반환값: [rows] — mysql2의 const [rows] = await pool.execute(...) 패턴 호환
+pool.execute = async function (sql, params = []) {
+  let i = 0;
+  const pgSql = sql.replace(/\?/g, () => `$${++i}`);
+  const result = await this.query(pgSql, params);
+  return [result.rows];
+};
+
+// ── PostgreSQL용 tryAlter (중복 컬럼/인덱스 오류 무시) ───────────────────
 async function tryAlter(sql) {
-  try { await pool.execute(sql); } catch (e) {
-    if (e.code !== "ER_DUP_FIELDNAME" && e.code !== "ER_DUP_KEYNAME") throw e;
+  try {
+    await pool.query(sql);
+  } catch (e) {
+    // 42701: duplicate_column  42P07: duplicate_table  42710: duplicate_object
+    if (!["42701", "42P07", "42710"].includes(e.code)) throw e;
   }
 }
 
 async function initDB() {
   // ── users 테이블 ─────────────────────────────────────────────────────────
-  await pool.execute(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      username VARCHAR(50) UNIQUE NOT NULL,
-      nickname VARCHAR(50) UNIQUE NOT NULL,
-      password VARCHAR(255) NOT NULL,
-      role ENUM('user', 'admin', 'super_admin') NOT NULL DEFAULT 'user',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      id         SERIAL PRIMARY KEY,
+      username   VARCHAR(50) UNIQUE NOT NULL,
+      nickname   VARCHAR(50) UNIQUE NOT NULL,
+      password   VARCHAR(255) NOT NULL,
+      role       VARCHAR(20) NOT NULL DEFAULT 'user'
+                 CHECK (role IN ('user', 'admin', 'super_admin')),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  await tryAlter("ALTER TABLE users ADD COLUMN role ENUM('user','admin','super_admin') NOT NULL DEFAULT 'user'");
+  await tryAlter("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin','super_admin'))");
 
   // ── user_problems 테이블 ──────────────────────────────────────────────────
-  await pool.execute(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS user_problems (
-      id           INT AUTO_INCREMENT PRIMARY KEY,
-      user_id      INT NOT NULL,
-      problem_id   INT NOT NULL,
-      is_correct   BOOLEAN NOT NULL DEFAULT FALSE,
-      hint_used    BOOLEAN NOT NULL DEFAULT FALSE,
+      id            SERIAL PRIMARY KEY,
+      user_id       INT NOT NULL REFERENCES users(id),
+      problem_id    INT NOT NULL,
+      is_correct    BOOLEAN NOT NULL DEFAULT FALSE,
+      hint_used     BOOLEAN NOT NULL DEFAULT FALSE,
       answer_viewed BOOLEAN NOT NULL DEFAULT FALSE,
       points_earned INT NOT NULL DEFAULT 0,
-      updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      UNIQUE KEY unique_user_problem (user_id, problem_id),
-      FOREIGN KEY (user_id) REFERENCES users(id)
+      clean_solve   BOOLEAN NOT NULL DEFAULT FALSE,
+      updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (user_id, problem_id)
     )
   `);
-  // 기존 테이블 마이그레이션
-  await tryAlter("ALTER TABLE user_problems ADD COLUMN hint_used BOOLEAN NOT NULL DEFAULT FALSE");
-  await tryAlter("ALTER TABLE user_problems ADD COLUMN answer_viewed BOOLEAN NOT NULL DEFAULT FALSE");
-  await tryAlter("ALTER TABLE user_problems ADD COLUMN points_earned INT NOT NULL DEFAULT 0");
-  await tryAlter("ALTER TABLE user_problems ADD COLUMN clean_solve BOOLEAN NOT NULL DEFAULT FALSE");
+  await tryAlter("ALTER TABLE user_problems ADD COLUMN IF NOT EXISTS hint_used BOOLEAN NOT NULL DEFAULT FALSE");
+  await tryAlter("ALTER TABLE user_problems ADD COLUMN IF NOT EXISTS answer_viewed BOOLEAN NOT NULL DEFAULT FALSE");
+  await tryAlter("ALTER TABLE user_problems ADD COLUMN IF NOT EXISTS points_earned INT NOT NULL DEFAULT 0");
+  await tryAlter("ALTER TABLE user_problems ADD COLUMN IF NOT EXISTS clean_solve BOOLEAN NOT NULL DEFAULT FALSE");
 
   // ── inquiries 테이블 ──────────────────────────────────────────────────────
-  await pool.execute(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS inquiries (
-      id         INT AUTO_INCREMENT PRIMARY KEY,
-      user_id    INT NOT NULL,
+      id         SERIAL PRIMARY KEY,
+      user_id    INT NOT NULL REFERENCES users(id),
       title      VARCHAR(200) NOT NULL,
       content    TEXT NOT NULL,
-      images     JSON,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id)
+      images     JSONB,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  await tryAlter("ALTER TABLE inquiries ADD COLUMN images JSON");
+  await tryAlter("ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS images JSONB");
 
   // ── notices 테이블 ────────────────────────────────────────────────────────
-  await pool.execute(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS notices (
-      id         INT AUTO_INCREMENT PRIMARY KEY,
-      user_id    INT NOT NULL,
+      id         SERIAL PRIMARY KEY,
+      user_id    INT NOT NULL REFERENCES users(id),
       title      VARCHAR(200) NOT NULL,
       content    TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id)
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
 
   // ── inquiry_comments 테이블 ───────────────────────────────────────────────
-  await pool.execute(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS inquiry_comments (
-      id         INT AUTO_INCREMENT PRIMARY KEY,
-      inquiry_id INT NOT NULL,
-      user_id    INT NOT NULL,
+      id         SERIAL PRIMARY KEY,
+      inquiry_id INT NOT NULL REFERENCES inquiries(id) ON DELETE CASCADE,
+      user_id    INT NOT NULL REFERENCES users(id),
       content    TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (inquiry_id) REFERENCES inquiries(id) ON DELETE CASCADE,
-      FOREIGN KEY (user_id)    REFERENCES users(id)
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
 
   // ── notifications 테이블 ──────────────────────────────────────────────────
-  await pool.execute(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS notifications (
-      id         INT AUTO_INCREMENT PRIMARY KEY,
-      user_id    INT NOT NULL,
-      type       ENUM('new_inquiry','new_reply','announcement') NOT NULL DEFAULT 'announcement',
+      id         SERIAL PRIMARY KEY,
+      user_id    INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      type       VARCHAR(20) NOT NULL DEFAULT 'announcement'
+                 CHECK (type IN ('new_inquiry', 'new_reply', 'announcement')),
       title      VARCHAR(200) NOT NULL,
       message    TEXT,
       is_read    BOOLEAN NOT NULL DEFAULT FALSE,
       related_id INT DEFAULT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
 
-  // ── 운영자 계정 승격 ──────────────────────────────────────────────────────
-  const [admins] = await pool.execute(
+  // ── 첫 번째 가입자를 super_admin으로 승격 ────────────────────────────────
+  const admins = await pool.query(
     "SELECT id FROM users WHERE role IN ('admin', 'super_admin') LIMIT 1"
   );
-  if (admins.length === 0) {
-    await pool.execute(
-      "UPDATE users SET role = 'super_admin' WHERE id = (SELECT id FROM (SELECT id FROM users ORDER BY id ASC LIMIT 1) AS t)"
+  if (admins.rows.length === 0) {
+    await pool.query(
+      "UPDATE users SET role = 'super_admin' WHERE id = (SELECT id FROM users ORDER BY id ASC LIMIT 1)"
     );
   }
 
