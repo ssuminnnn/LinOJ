@@ -6,7 +6,22 @@ const path = require("path");
 const app = express();
 
 // 미들웨어
-app.use(cors());
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://linoj.vercel.app",
+];
+app.use(cors({
+  origin: (origin, callback) => {
+    // origin이 없으면 Render Health Check 등 서버 간 요청
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
 // 업로드 이미지 정적 서빙

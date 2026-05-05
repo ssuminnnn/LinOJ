@@ -3,3 +3,6 @@ node_modules
 *.db
 .DS_Store
 .claude/
+# 업로드된 이미지는 제외 (디렉토리 구조는 런타임에 자동 생성됨)
+backend/uploads/*
+!backend/uploads/.gitkeep
