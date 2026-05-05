@@ -98,7 +98,7 @@ router.get("/", auth, requireAdmin, async (req, res) => {
       FROM inquiries i
       JOIN users u ON u.id = i.user_id
       LEFT JOIN inquiry_comments ic ON ic.inquiry_id = i.id
-      GROUP BY i.id
+      GROUP BY i.id, i.title, i.content, i.images, i.created_at, u.nickname
       ORDER BY i.created_at DESC
     `);
 
@@ -131,7 +131,7 @@ router.get("/my", auth, async (req, res) => {
       FROM inquiries i
       LEFT JOIN inquiry_comments ic ON ic.inquiry_id = i.id
       WHERE i.user_id = ?
-      GROUP BY i.id
+      GROUP BY i.id, i.title, i.created_at
       ORDER BY i.created_at DESC
     `, [userId]);
 
