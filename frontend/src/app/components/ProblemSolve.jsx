@@ -15,6 +15,7 @@ export function ProblemSolve({
   problemId, onBack, onSolve,
   onHintUsed, onAnswerViewed, onGoToLearn,
   onNextProblem, hasNextProblem,
+  onPrevProblem, hasPrevProblem,
   solvedProblems = {},
 }) {
   const [result, setResult]       = useState("");
@@ -149,14 +150,24 @@ export function ProblemSolve({
         {answerViewed && (
           <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">정답 확인 (점수 없음)</span>
         )}
-        {hasNextProblem && (
-          <button
-            onClick={onNextProblem}
-            className="ml-auto flex items-center gap-1 px-4 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-full hover:bg-blue-700 transition-colors"
-          >
-            다음 문제 →
-          </button>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          {hasPrevProblem && (
+            <button
+              onClick={onPrevProblem}
+              className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-full hover:bg-gray-200 transition-colors"
+            >
+              ← 이전 문제
+            </button>
+          )}
+          {hasNextProblem && (
+            <button
+              onClick={onNextProblem}
+              className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-full hover:bg-blue-700 transition-colors"
+            >
+              다음 문제 →
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden">

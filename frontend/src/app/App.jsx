@@ -159,9 +159,19 @@ export default function App() {
     }
   };
 
+  const handlePrevProblem = () => {
+    const idx = PROBLEMS.findIndex((p) => p.id === selectedProblem);
+    if (idx > 0) setSelectedProblem(PROBLEMS[idx - 1].id);
+  };
+
   const hasNextProblem = () => {
     const idx = PROBLEMS.findIndex((p) => p.id === selectedProblem);
     return idx !== -1 && idx < PROBLEMS.length - 1;
+  };
+
+  const hasPrevProblem = () => {
+    const idx = PROBLEMS.findIndex((p) => p.id === selectedProblem);
+    return idx > 0;
   };
 
   // ── 풀이 저장 ─────────────────────────────────────────────────────────────
@@ -337,6 +347,8 @@ export default function App() {
           onGoToLearn={handleGoToLearn}
           onNextProblem={handleNextProblem}
           hasNextProblem={hasNextProblem()}
+          onPrevProblem={handlePrevProblem}
+          hasPrevProblem={hasPrevProblem()}
           solvedProblems={solvedProblems}
         />
       )}
