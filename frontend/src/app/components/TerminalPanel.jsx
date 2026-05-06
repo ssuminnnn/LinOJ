@@ -113,15 +113,6 @@ export function TerminalPanel({ onExecute }) {
         term.write(makePrompt(cwdRef.current) + inputRef.current);
         return;
       }
-      // Ctrl+V 또는 Cmd+V (메타키) — 클립보드 붙여넣기
-      if ((ctrl && keyCode === 86) || (domEvent.metaKey && keyCode === 86)) {
-        navigator.clipboard.readText().then((text) => {
-          const clean = text.replace(/\r?\n|\r/g, " "); // 줄바꿈 → 공백
-          inputRef.current += clean;
-          term.write(clean);
-        }).catch(() => {});
-        return;
-      }
       if (keyCode === 13) {           // Enter
         const cmd = inputRef.current;
         inputRef.current = "";
@@ -169,16 +160,36 @@ export function TerminalPanel({ onExecute }) {
       }
     });
 
-    // 브라우저 기본 paste 이벤트 (우클릭 붙여넣기 포함)
-    const handlePaste = (e) => {
-      if (isLoadingRef.current) return;
-      const text = e.clipboardData?.getData("text") || "";
-      if (!text) return;
-      const clean = text.replace(/\r?\n|\r/g, " ");
+    // ── 붙여넣기 핸들러 ──────────────────────────────────────────────────────
+    const doPaste = (text) => {
+      if (!text || isLoadingRef.current) return;
+      const clean = text.replace(/\r?\n|\r/g, " "); // 줄바꿈 → 공백
       inputRef.current += clean;
       term.write(clean);
-      e.preventDefault();
     };
+
+    // Ctrl+V / Cmd+V — xterm 기본 처리 전에 가로채기
+    term.attachCustomKeyEventHandler((e) => {
+      if (e.type !== "keydown") return true;
+      if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+        navigator.clipboard.readText()
+          .then(doPaste)
+          .catch(() => {});
+        return false; // xterm이 이 키를 처리하지 않도록 막음
+      }
+      return true;
+    });
+
+    // paste 이벤트 (우클릭 → 붙여넣기 포함)
+    const handlePaste = (e) => {
+      const text = e.clipboardData?.getData("text") || "";
+      doPaste(text);
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    // xterm 내부 textarea에 직접 붙임 (xterm이 포커스를 가져가도 동작)
+    if (term.textarea) term.textarea.addEventListener("paste", handlePaste);
     containerRef.current.addEventListener("paste", handlePaste);
 
     // 리사이즈
@@ -192,6 +203,7 @@ export function TerminalPanel({ onExecute }) {
       if (containerRef.current) {
         containerRef.current.removeEventListener("paste", handlePaste);
       }
+      if (term.textarea) term.textarea.removeEventListener("paste", handlePaste);
       term.dispose();
       termRef.current = null;
     };
