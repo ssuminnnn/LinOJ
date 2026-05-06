@@ -318,6 +318,15 @@ function setupProblemFiles(homeDir) {
       fs.writeFileSync(path.join(homeDir, "readme.txt"), "readme\n");
     }
 
+    // 103번: ls | wc -l → 정확히 5개 (문제 8번과 동일)
+    if (id === 103) {
+      fs.mkdirSync(path.join(homeDir, "documents"), { recursive: true });
+      fs.mkdirSync(path.join(homeDir, "downloads"), { recursive: true });
+      fs.writeFileSync(path.join(homeDir, "readme.txt"), "readme\n");
+      fs.mkdirSync(path.join(homeDir, "notes"), { recursive: true });
+      fs.writeFileSync(path.join(homeDir, "image.png"), "fake image\n");
+    }
+
     // 104번: find . -type f
     if (id === 104) {
       fs.mkdirSync(path.join(homeDir, "subdir"), { recursive: true });
