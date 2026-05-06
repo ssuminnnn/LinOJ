@@ -29,30 +29,6 @@ export function ProblemSolve({
   const [hintUsed,     setHintUsed]     = useState(problemInfo.hintUsed     || false);
   const [answerViewed, setAnswerViewed] = useState(problemInfo.answerViewed || false);
 
-  // ── 맥북 트랙패드 두 손가락 스와이프 뒤로가기 ──────────────────────────
-  // pushState에 #solving 해시를 붙여 두 히스토리 엔트리 URL이 달라야 Chrome이 스와이프 완료
-  const onBackRef = useRef(onBack);
-  onBackRef.current = onBack;
-
-  useEffect(() => {
-    const base = window.location.href.split("#")[0];
-    // React StrictMode에서 effect 두 번 실행 → 이미 #solving이면 replaceState로 중복 방지
-    if (window.location.hash === "#solving") {
-      window.history.replaceState({ page: "solve" }, "", base + "#solving");
-    } else {
-      window.history.pushState({ page: "solve" }, "", base + "#solving");
-    }
-    const handlePop = () => onBackRef.current();
-    window.addEventListener("popstate", handlePop);
-    return () => {
-      window.removeEventListener("popstate", handlePop);
-      // 컴포넌트 언마운트 시 해시 제거
-      if (window.location.hash === "#solving") {
-        window.history.replaceState({}, "", window.location.href.split("#")[0]);
-      }
-    };
-  }, []); // eslint-disable-line
-
   // 문제가 바뀌면 상태 리셋
   useEffect(() => {
     const prev = solvedProblems[problemId] || {};

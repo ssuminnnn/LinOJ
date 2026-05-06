@@ -44,7 +44,13 @@ export default function App() {
       }
       setCurrentUser(payload.nickname);
       setCurrentRole(payload.role || "user");
-      fetchSolvedProblems().then(() => setCurrentPage("problems"));
+      fetchSolvedProblems().then(() => {
+        // 새로고침 시 현재 history state가 없으면 problems로 초기화
+        if (!window.history.state?.page) {
+          window.history.replaceState({ page: "problems" }, "");
+        }
+        setCurrentPage(window.history.state?.page || "problems");
+      });
     } catch {
       localStorage.removeItem("token");
       setCurrentPage("login");
@@ -92,6 +98,7 @@ export default function App() {
     setCurrentUser(nickname);
     setCurrentRole(role || "user");
     await fetchSolvedProblems();
+    window.history.replaceState({ page: "problems" }, "");
     setCurrentPage("problems");
   };
 
@@ -99,6 +106,7 @@ export default function App() {
     setCurrentUser(nickname);
     setCurrentRole(role || "user");
     await fetchSolvedProblems();
+    window.history.replaceState({ page: "problems" }, "");
     setCurrentPage("problems");
   };
 
@@ -144,25 +152,39 @@ export default function App() {
   const refreshNotifications = () => fetchNotifications();
 
   const handleSelectProblem = (id) => {
+    window.history.pushState({ page: "solve", problemId: id }, "");
     setSelectedProblem(id);
     setCurrentPage("solve");
   };
 
   const handleBackFromSolve = () => {
-    setSelectedProblem(null);
-    setCurrentPage("problems");
+    // popstate will fire and update state, but if there's no history to go back to,
+    // we navigate manually
+    if (window.history.state?.page === "solve") {
+      window.history.back();
+    } else {
+      window.history.pushState({ page: "problems" }, "");
+      setSelectedProblem(null);
+      setCurrentPage("problems");
+    }
   };
 
   const handleNextProblem = () => {
     const idx = PROBLEMS.findIndex((p) => p.id === selectedProblem);
     if (idx !== -1 && idx < PROBLEMS.length - 1) {
-      setSelectedProblem(PROBLEMS[idx + 1].id);
+      const nextId = PROBLEMS[idx + 1].id;
+      window.history.pushState({ page: "solve", problemId: nextId }, "");
+      setSelectedProblem(nextId);
     }
   };
 
   const handlePrevProblem = () => {
     const idx = PROBLEMS.findIndex((p) => p.id === selectedProblem);
-    if (idx > 0) setSelectedProblem(PROBLEMS[idx - 1].id);
+    if (idx > 0) {
+      const prevId = PROBLEMS[idx - 1].id;
+      window.history.pushState({ page: "solve", problemId: prevId }, "");
+      setSelectedProblem(prevId);
+    }
   };
 
   const hasNextProblem = () => {
@@ -174,6 +196,23 @@ export default function App() {
     const idx = PROBLEMS.findIndex((p) => p.id === selectedProblem);
     return idx > 0;
   };
+
+  // ── 브라우저 뒤로/앞으로 가기 ─────────────────────────────────────────────
+  useEffect(() => {
+    const handlePop = (e) => {
+      const state = e.state;
+      if (!state) return;
+      if (state.page === "solve" && state.problemId != null) {
+        setSelectedProblem(state.problemId);
+        setCurrentPage("solve");
+      } else if (state.page) {
+        setSelectedProblem(null);
+        setCurrentPage(state.page);
+      }
+    };
+    window.addEventListener("popstate", handlePop);
+    return () => window.removeEventListener("popstate", handlePop);
+  }, []);
 
   // ── 풀이 저장 ─────────────────────────────────────────────────────────────
   const handleSolve = async (problemId, isCorrect, hintUsed = false, answerViewed = false) => {
@@ -262,6 +301,7 @@ export default function App() {
 
   // ── 힌트에서 학습으로 이동 ────────────────────────────────────────────────
   const handleGoToLearn = (chapterId) => {
+    window.history.pushState({ page: "learn" }, "");
     setSelectedLearnChapter(chapterId);
     setSelectedProblem(null);
     setCurrentPage("learn");
@@ -269,8 +309,10 @@ export default function App() {
 
   const handleNavigate = (page) => {
     if (["problems", "learn", "myproblems", "ranking", "notices"].includes(page)) {
+      window.history.pushState({ page }, "");
       setCurrentPage(page);
     } else if (page === "inquiries" && currentUser) {
+      window.history.pushState({ page }, "");
       setCurrentPage(page);
     }
   };
