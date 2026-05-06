@@ -113,6 +113,15 @@ export function TerminalPanel({ onExecute }) {
         term.write(makePrompt(cwdRef.current) + inputRef.current);
         return;
       }
+      // Ctrl+V 또는 Cmd+V (메타키) — 클립보드 붙여넣기
+      if ((ctrl && keyCode === 86) || (domEvent.metaKey && keyCode === 86)) {
+        navigator.clipboard.readText().then((text) => {
+          const clean = text.replace(/\r?\n|\r/g, " "); // 줄바꿈 → 공백
+          inputRef.current += clean;
+          term.write(clean);
+        }).catch(() => {});
+        return;
+      }
       if (keyCode === 13) {           // Enter
         const cmd = inputRef.current;
         inputRef.current = "";
@@ -160,6 +169,18 @@ export function TerminalPanel({ onExecute }) {
       }
     });
 
+    // 브라우저 기본 paste 이벤트 (우클릭 붙여넣기 포함)
+    const handlePaste = (e) => {
+      if (isLoadingRef.current) return;
+      const text = e.clipboardData?.getData("text") || "";
+      if (!text) return;
+      const clean = text.replace(/\r?\n|\r/g, " ");
+      inputRef.current += clean;
+      term.write(clean);
+      e.preventDefault();
+    };
+    containerRef.current.addEventListener("paste", handlePaste);
+
     // 리사이즈
     const observer = new ResizeObserver(() => {
       try { fitAddon.fit(); } catch (_) {}
@@ -168,6 +189,9 @@ export function TerminalPanel({ onExecute }) {
 
     return () => {
       observer.disconnect();
+      if (containerRef.current) {
+        containerRef.current.removeEventListener("paste", handlePaste);
+      }
       term.dispose();
       termRef.current = null;
     };
