@@ -168,24 +168,30 @@ export function TerminalPanel({ onExecute }) {
       term.write(clean);
     };
 
+    // Cmd+V / Ctrl+V 처리 중 플래그 (paste 이벤트 중복 방지)
+    let keyboardPasteInProgress = false;
+
     // Ctrl+V / Cmd+V — xterm 기본 처리 전에 가로채기
     term.attachCustomKeyEventHandler((e) => {
       if (e.type !== "keydown") return true;
       if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+        keyboardPasteInProgress = true;
         navigator.clipboard.readText()
           .then(doPaste)
-          .catch(() => {});
+          .catch(() => {})
+          .finally(() => { keyboardPasteInProgress = false; });
         return false; // xterm이 이 키를 처리하지 않도록 막음
       }
       return true;
     });
 
-    // paste 이벤트 (우클릭 → 붙여넣기 포함)
+    // paste 이벤트 (우클릭 → 붙여넣기 — Ctrl+V/Cmd+V 경로와 중복 방지)
     const handlePaste = (e) => {
-      const text = e.clipboardData?.getData("text") || "";
-      doPaste(text);
       e.preventDefault();
       e.stopPropagation();
+      if (keyboardPasteInProgress) return; // Ctrl+V/Cmd+V가 이미 처리 중이면 무시
+      const text = e.clipboardData?.getData("text") || "";
+      doPaste(text);
     };
 
     // xterm 내부 textarea에 직접 붙임 (xterm이 포커스를 가져가도 동작)
