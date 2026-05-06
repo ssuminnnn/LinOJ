@@ -328,6 +328,7 @@ export default function App() {
 
       {currentPage === "solve" && selectedProblem !== null && (
         <ProblemSolve
+          key={selectedProblem}
           problemId={selectedProblem}
           onBack={handleBackFromSolve}
           onSolve={handleSolve}
