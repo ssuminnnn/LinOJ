@@ -14,6 +14,7 @@ function generateSessionId() {
 export function ProblemSolve({
   problemId, onBack, onSolve,
   onHintUsed, onAnswerViewed, onGoToLearn,
+  onNextProblem, hasNextProblem,
   solvedProblems = {},
 }) {
   const [result, setResult]       = useState("");
@@ -147,6 +148,14 @@ export function ProblemSolve({
         )}
         {answerViewed && (
           <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">정답 확인 (점수 없음)</span>
+        )}
+        {isCorrect === true && hasNextProblem && (
+          <button
+            onClick={onNextProblem}
+            className="ml-auto flex items-center gap-1 px-4 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-full hover:bg-blue-700 transition-colors animate-pulse"
+          >
+            다음 문제 →
+          </button>
         )}
       </header>
 

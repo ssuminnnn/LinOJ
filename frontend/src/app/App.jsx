@@ -10,6 +10,7 @@ import { ProblemSolve } from "./components/ProblemSolve";
 import { InquiryBoard } from "./components/InquiryBoard";
 import { NoticePage } from "./components/NoticePage";
 import { API_URL } from "./config/api";
+import { PROBLEMS } from "./data/problems";
 
 const API = API_URL;
 
@@ -149,6 +150,18 @@ export default function App() {
   const handleBackFromSolve = () => {
     setSelectedProblem(null);
     setCurrentPage("problems");
+  };
+
+  const handleNextProblem = () => {
+    const idx = PROBLEMS.findIndex((p) => p.id === selectedProblem);
+    if (idx !== -1 && idx < PROBLEMS.length - 1) {
+      setSelectedProblem(PROBLEMS[idx + 1].id);
+    }
+  };
+
+  const hasNextProblem = () => {
+    const idx = PROBLEMS.findIndex((p) => p.id === selectedProblem);
+    return idx !== -1 && idx < PROBLEMS.length - 1;
   };
 
   // ── 풀이 저장 ─────────────────────────────────────────────────────────────
@@ -321,6 +334,8 @@ export default function App() {
           onHintUsed={handleHintUsed}
           onAnswerViewed={handleAnswerViewed}
           onGoToLearn={handleGoToLearn}
+          onNextProblem={handleNextProblem}
+          hasNextProblem={hasNextProblem()}
           solvedProblems={solvedProblems}
         />
       )}
