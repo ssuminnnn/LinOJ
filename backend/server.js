@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const pool = require("./db");
 
 const app = express();
 
@@ -39,6 +40,16 @@ app.use("/api/execute", require("./routes/executeRoutes"));
 app.use("/api/inquiries", require("./routes/inquiryRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/notices", require("./routes/noticeRoutes"));
+
+// 상태 확인: DB까지 조회해서 무료 DB가 정지되지 않도록 keep-alive에서도 사용
+app.get("/api/health", async (req, res) => {
+  try {
+    await pool.query("SELECT 1");
+    res.json({ ok: true });
+  } catch {
+    res.status(503).json({ ok: false });
+  }
+});
 
 // 기본 테스트 라우트 (선택)
 app.get("/", (req, res) => {
