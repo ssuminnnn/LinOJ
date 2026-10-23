@@ -157,16 +157,11 @@ export default function App() {
     setCurrentPage("solve");
   };
 
+  // "문제 목록" 버튼: 이전/다음 문제로 이동하며 history가 쌓여 있어도 항상 목록으로 이동
   const handleBackFromSolve = () => {
-    // popstate will fire and update state, but if there's no history to go back to,
-    // we navigate manually
-    if (window.history.state?.page === "solve") {
-      window.history.back();
-    } else {
-      window.history.pushState({ page: "problems" }, "");
-      setSelectedProblem(null);
-      setCurrentPage("problems");
-    }
+    window.history.pushState({ page: "problems" }, "");
+    setSelectedProblem(null);
+    setCurrentPage("problems");
   };
 
   const handleNextProblem = () => {
