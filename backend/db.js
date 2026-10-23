@@ -40,6 +40,12 @@ async function initDB() {
   `);
   await tryAlter("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin','super_admin'))");
 
+  // ── 구글 로그인용 컬럼 (구글 계정은 비밀번호가 없음) ─────────────────────
+  await tryAlter("ALTER TABLE users ALTER COLUMN password DROP NOT NULL");
+  await tryAlter("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(64)");
+  await tryAlter("ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255)");
+  await pool.query("CREATE UNIQUE INDEX IF NOT EXISTS users_google_id_key ON users (google_id) WHERE google_id IS NOT NULL");
+
   // ── user_problems 테이블 ──────────────────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS user_problems (
@@ -116,7 +122,7 @@ async function initDB() {
   );
   if (admins.rows.length === 0) {
     await pool.query(
-      "UPDATE users SET role = 'super_admin' WHERE id = (SELECT id FROM users ORDER BY id ASC LIMIT 1)"
+      "UPDATE users SET role = 'super_admin' WHERE id = (SELECT id FROM users WHERE password IS NOT NULL ORDER BY id ASC LIMIT 1)"
     );
   }
 
