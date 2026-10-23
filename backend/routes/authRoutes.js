@@ -1,10 +1,12 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { OAuth2Client } = require("google-auth-library");
 const pool = require("../db");
 
 const router = express.Router();
 const SALT_ROUNDS = 10;
+const googleClient = new OAuth2Client();
 
 // 닉네임 중복 확인
 router.post("/check-nickname", async (req, res) => {
@@ -72,7 +74,8 @@ router.post("/login", async (req, res) => {
   }
 
   const user = rows[0];
-  const valid = await bcrypt.compare(password, user.password);
+  // 구글 계정은 비밀번호가 없으므로 아이디/비밀번호 로그인 불가
+  const valid = user.password ? await bcrypt.compare(password, user.password) : false;
   if (!valid) {
     return res.status(401).json({ error: "아이디 또는 비밀번호가 올바르지 않습니다." });
   }
@@ -83,6 +86,96 @@ router.post("/login", async (req, res) => {
     { expiresIn: "7d" }
   );
   res.json({ token, username, nickname: user.nickname, role: user.role || "user" });
+});
+
+// 구글 로그인: 구글이 발급한 ID 토큰을 검증
+router.post("/google", async (req, res) => {
+  const { credential } = req.body;
+  if (!credential) return res.status(400).json({ error: "구글 인증 정보가 없습니다." });
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    return res.status(500).json({ error: "구글 로그인이 설정되지 않았습니다." });
+  }
+
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    payload = ticket.getPayload();
+  } catch {
+    return res.status(401).json({ error: "구글 인증에 실패했습니다." });
+  }
+
+  const googleId = payload.sub;
+  const [rows] = await pool.execute("SELECT * FROM users WHERE google_id = ?", [googleId]);
+
+  // 이미 가입한 구글 계정이면 바로 로그인
+  if (rows.length > 0) {
+    const user = rows[0];
+    const role = user.role || "user";
+    const token = jwt.sign(
+      { username: user.username, nickname: user.nickname, role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    return res.json({ token, username: user.username, nickname: user.nickname, role });
+  }
+
+  // 처음이면 닉네임을 입력받아야 하므로 가입용 임시 토큰만 발급
+  const signupToken = jwt.sign(
+    { purpose: "google-signup", googleId, email: payload.email || null },
+    process.env.JWT_SECRET,
+    { expiresIn: "15m" }
+  );
+  res.json({ needNickname: true, signupToken });
+});
+
+// 구글 첫 로그인: 닉네임을 정해 가입 완료 (항상 일반 사용자로 생성)
+router.post("/google/complete", async (req, res) => {
+  const { signupToken } = req.body;
+  const nickname = (req.body.nickname || "").trim();
+
+  let signup;
+  try {
+    signup = jwt.verify(signupToken || "", process.env.JWT_SECRET);
+  } catch {
+    return res.status(401).json({ error: "가입 시간이 만료되었습니다. 다시 로그인해 주세요." });
+  }
+  if (signup.purpose !== "google-signup") {
+    return res.status(401).json({ error: "유효하지 않은 요청입니다." });
+  }
+
+  if (nickname.length < 2 || nickname.length > 20) {
+    return res.status(400).json({ error: "닉네임은 2~20자로 입력하세요." });
+  }
+
+  const [existingNick] = await pool.execute("SELECT id FROM users WHERE nickname = ?", [nickname]);
+  if (existingNick.length > 0) {
+    return res.status(409).json({ error: "이미 사용 중인 닉네임입니다." });
+  }
+
+  // 이미 같은 구글 계정으로 가입돼 있으면 중복 생성 방지
+  const [existingGoogle] = await pool.execute("SELECT id FROM users WHERE google_id = ?", [signup.googleId]);
+  if (existingGoogle.length > 0) {
+    return res.status(409).json({ error: "이미 가입된 구글 계정입니다. 다시 로그인해 주세요." });
+  }
+
+  const username = `google_${signup.googleId}`;
+  try {
+    await pool.execute(
+      "INSERT INTO users (username, nickname, password, role, google_id, email) VALUES (?, ?, NULL, 'user', ?, ?)",
+      [username, nickname, signup.googleId, signup.email]
+    );
+  } catch (e) {
+    if (e.code === "23505") {
+      return res.status(409).json({ error: "이미 사용 중인 닉네임입니다." });
+    }
+    throw e;
+  }
+
+  const token = jwt.sign({ username, nickname, role: "user" }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  res.json({ token, username, nickname, role: "user" });
 });
 
 module.exports = router;
