@@ -10,6 +10,9 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
   "https://linoj.vercel.app",
+  "https://linoj.online",
+  "https://www.linoj.online",
+  ...(process.env.ALLOWED_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean),
 ];
 app.use(cors({
   origin: (origin, callback) => {
