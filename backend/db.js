@@ -126,6 +126,15 @@ async function initDB() {
     );
   }
 
+  // ── RLS (Row-Level Security) 보안 설정 ─────────────────────────────────────
+  // Supabase Data API를 통한 비인가 접근 차단 (백엔드는 DB 소유자 계정으로 접속하므로 영향 없음)
+  await tryAlter("ALTER TABLE users ENABLE ROW LEVEL SECURITY");
+  await tryAlter("ALTER TABLE user_problems ENABLE ROW LEVEL SECURITY");
+  await tryAlter("ALTER TABLE inquiries ENABLE ROW LEVEL SECURITY");
+  await tryAlter("ALTER TABLE notices ENABLE ROW LEVEL SECURITY");
+  await tryAlter("ALTER TABLE inquiry_comments ENABLE ROW LEVEL SECURITY");
+  await tryAlter("ALTER TABLE notifications ENABLE ROW LEVEL SECURITY");
+
   console.log("DB 연결 및 테이블 초기화 완료");
 }
 
